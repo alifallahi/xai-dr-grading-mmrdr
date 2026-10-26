@@ -1,0 +1,35 @@
+# CPU smoke test on the synthetic MMRDR-shaped dataset (scripts/make_synthetic_mmrdr.py).
+# Checks that every script runs end to end; the numbers it produces mean nothing.
+inherit: default.yaml
+experiment_name: smoke_resnet18
+paths:
+  mmrdr_cfp_dir: data/synthetic/MMRDR/MMRDR-CFP
+  prepared_dir: data/synthetic_prepared
+  output_dir: outputs_smoke
+data:
+  image_size: 128
+  val_n_splits: 5
+  num_workers: 0
+model:
+  name: resnet18
+  pretrained: false
+  drop_rate: 0.0
+train:
+  epochs: 8
+  batch_size: 16
+  lr: 1.0e-3
+  amp: false
+  early_stopping_patience: 4
+evaluation:
+  batch_size: 32
+  n_bootstrap: 50
+explain:
+  ig_steps: 8
+  faithfulness_n_per_grade: 4
+  faithfulness_steps: 8
+  sanity_n: 4
+robustness:
+  gaussian_blur: [1.0]
+  darken_gamma: [2.0]
+  low_contrast: [0.5]
+  jpeg_quality: [20]

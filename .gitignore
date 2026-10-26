@@ -1,0 +1,14 @@
+# Data are never committed (licence and size). See README for how to obtain MMRDR.
+data/
+outputs/
+outputs_smoke/
+*.pt
+*.npy
+*.npz
+
+__pycache__/
+*.egg-info/
+.pytest_cache/
+.ipynb_checkpoints/
+.venv/
+.DS_Store

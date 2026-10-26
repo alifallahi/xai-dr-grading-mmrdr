@@ -1,0 +1,6 @@
+# Hyperparameter grid point: as default.yaml but learning rate 1e-4.
+# Grid = {lr 3e-4, 1e-4} x {class-weighted, unweighted}, seed 42; chosen on validation QWK.
+inherit: default.yaml
+experiment_name: resnet50_wce_512_lr1e-4
+train:
+  lr: 1.0e-4

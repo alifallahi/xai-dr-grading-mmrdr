@@ -1,0 +1,69 @@
+# Main experiment: ImageNet-pretrained ResNet-50 fine-tuned at 512 x 512 with
+# class-weighted cross-entropy. Every value here can be overridden from the
+# command line, e.g.  --set train.lr=1e-4 experiment_name=resnet50_lr1e-4
+# The fully resolved config is written into each run folder.
+
+experiment_name: resnet50_wce_512
+seed: 42
+
+paths:
+  mmrdr_cfp_dir: data/MMRDR/MMRDR-CFP   # folder that contains FP.csv and img/
+  prepared_dir: data/prepared            # preprocessed image cache, metadata, splits, audit
+  output_dir: outputs                    # runs, evaluation, explanations, report tables
+
+data:
+  image_size: 512          # network input size (the MMRDR benchmark also used 512)
+  fov_threshold: 15        # 0-255 intensity threshold for the circular field-of-view mask
+  val_n_splits: 8          # 1/8 of the official training split becomes validation (7:1, as in the benchmark)
+  dup_ncc_min: 0.90        # near-duplicate if normalised cross-correlation of high-pass green thumbnails >= this
+  num_workers: 2
+
+augmentation:             # applied to training images only
+  hflip: true              # left/right eye mirror; DR grade is laterality-invariant
+  rotation_degrees: 25
+  scale: [0.9, 1.1]
+  translate: 0.05
+  brightness: 0.2          # colour jitter mimics camera/illumination variation across sites
+  contrast: 0.2
+  saturation: 0.1
+
+model:
+  name: resnet50.tv2_in1k  # timm identifier; ImageNet-1k weights (torchvision V2 recipe)
+  pretrained: true
+  drop_rate: 0.2           # dropout before the classifier
+
+train:
+  epochs: 25
+  batch_size: 16
+  lr: 3.0e-4
+  weight_decay: 1.0e-4
+  warmup_epochs: 1
+  class_weighting: inverse_sqrt   # none | inverse | inverse_sqrt
+  label_smoothing: 0.0            # kept at 0 so calibration analysis is not confounded
+  amp: true
+  grad_clip: 1.0
+  early_stopping_patience: 7
+  selection_metric: qwk           # validation metric used to pick the checkpoint (qwk | macro_f1 | accuracy)
+  deterministic: false            # true = slower, bit-reproducible cuDNN kernels
+
+evaluation:
+  batch_size: 32
+  n_bootstrap: 1000
+  ece_bins: 15
+  referral_coverage: 0.80   # fraction of cases auto-accepted; uncertainty threshold is fitted on validation
+  undergrade_cost: 2.0      # cost multiplier for under-grading in the cost-sensitive rule (fixed a priori)
+
+explain:
+  ig_steps: 32
+  ig_baseline_blur_sigma: 16       # px at 512; blurred-image baseline (keeps colour, removes lesions)
+  faithfulness_n_per_grade: 40     # deletion/insertion evaluated on up to 40 test images per grade
+  faithfulness_steps: 16
+  faithfulness_cell: 32            # perturbation cell size in px at 512 (16 x 16 grid)
+  sanity_n: 30                     # images for the model-randomisation test
+  pointing_tolerance_px: 15        # px at 512
+
+robustness:
+  gaussian_blur: [1.0, 2.0, 4.0]   # sigma in px at 512
+  darken_gamma: [1.5, 2.0, 3.0]
+  low_contrast: [0.75, 0.5, 0.3]   # fraction of original contrast retained
+  jpeg_quality: [50, 20, 8]

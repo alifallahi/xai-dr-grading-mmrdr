@@ -1,0 +1,5 @@
+# Hyperparameter grid point: unweighted loss, learning rate 1e-4.
+inherit: ablation_unweighted.yaml
+experiment_name: resnet50_ce_512_lr1e-4
+train:
+  lr: 1.0e-4
